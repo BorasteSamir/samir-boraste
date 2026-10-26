@@ -1,6 +1,6 @@
 Samir Boraste
-[Your Email Address]
-[Your 3-Minute Video Link - Unlisted YouTube / Google Drive]
+samirboraste1@gmail.com
+[3-Minute Video Recording Link - Upload your unlisted YouTube or Google Drive link here]
 Run: python checker.py "<path_to_data_pack>"
 
 # Ridgeline Weather Network - Quality Control & Network Health Analysis
