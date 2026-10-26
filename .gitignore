@@ -1,0 +1,23 @@
+# Ignore data pack and brief PDF as instructed by assignment brief
+ridgeline_data_pack (2)/
+ridgeline_data_pack (2).zip
+*.zip
+Aeron-AI-Research-Engineer-Intern-AssignmentNew.pdf
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+
+# Scratch exploratory scripts
+analyze_network.py
+check_*.py
+inspect_*.py
+candidate_issues.py
+find_all_anomalies.py
+deep_inspect.py
+
+# OS metadata
+.DS_Store
+Thumbs.db
