@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ridgeline Weather Network - Coordinator Health Briefing</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 12mm 14mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.4;
+      font-size: 9.5pt;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .page {
+      height: 271mm;
+      max-height: 271mm;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    
+    .page-break {
+      page-break-after: always;
+      break-after: page;
+    }
+    
+    /* Header */
+    .header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    
+    .title-area h1 {
+      font-size: 17pt;
+      margin: 0 0 2px 0;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      font-weight: 700;
+    }
+    
+    .title-area .subtitle {
+      font-size: 9pt;
+      color: #475569;
+      font-weight: 500;
+    }
+    
+    .meta-box {
+      text-align: right;
+      font-size: 8pt;
+      color: #64748b;
+      line-height: 1.3;
+    }
+    
+    /* Executive Summary callouts */
+    .executive-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    
+    .exec-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #f8fafc;
+    }
+    
+    .exec-card.action-card {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+    
+    .exec-card.decision-card {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+    
+    .exec-card h3 {
+      margin: 0 0 4px 0;
+      font-size: 10pt;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .exec-card.action-card h3 { color: #1e40af; }
+    .exec-card.decision-card h3 { color: #166534; }
+    
+    .exec-card p {
+      margin: 0;
+      font-size: 8.5pt;
+      color: #334155;
+      line-height: 1.35;
+    }
+    
+    /* Section Headings */
+    .section-title {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 10px 0 6px 0;
+      border-left: 3px solid #2563eb;
+      padding-left: 6px;
+    }
+    
+    /* Status Table */
+    table.health-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-bottom: 8px;
+    }
+    
+    table.health-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      text-align: left;
+      padding: 5px 6px;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    
+    table.health-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+    
+    table.health-table tr:nth-child(even) td {
+      background: #fafafa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .badge-pass { background: #dcfce7; color: #15803d; }
+    .badge-adjust { background: #fef3c7; color: #b45309; }
+    .badge-exclude { background: #fee2e2; color: #b91c1c; }
+    
+    /* Dispatch Box on Page 2 */
+    .dispatch-container {
+      border: 2px solid #2563eb;
+      border-radius: 8px;
+      background: #f8fafc;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    
+    .dispatch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    
+    .dispatch-header h2 {
+      margin: 0;
+      font-size: 12pt;
+      color: #1e3a8a;
+    }
+    
+    .priority-badge {
+      background: #ef4444;
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 8pt;
+    }
+    
+    .dispatch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      font-size: 8.5pt;
+    }
+    
+    .step-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+    
+    .step-list li {
+      margin-bottom: 4px;
+      color: #1e293b;
+    }
+    
+    .callout-box {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+    
+    .callout-box h4 {
+      margin: 0 0 4px 0;
+      font-size: 8.5pt;
+      color: #0f172a;
+    }
+    
+    /* Footer */
+    .page-footer {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGE 1 ==================== -->
+  <div class="page page-break">
+    <div>
+      <div class="header">
+        <div class="title-area">
+          <h1>Ridgeline Weather Network Health Briefing</h1>
+          <div class="subtitle">Spring Climate Summary Decisions & Volunteer Technician Dispatch</div>
+        </div>
+        <div class="meta-box">
+          <strong>Coordinator Action Brief</strong><br>
+          6-Week Audit: Mar 01 &ndash; Apr 11, 2025<br>
+          Prepared for Monday Decision Meeting
+        </div>
+      </div>
+      
+      <div class="executive-grid">
+        <div class="exec-card decision-card">
+          <h3><span>&#10004;</span> Decision 1: Spring Climate Summary</h3>
+          <p>
+            <strong>88.4% of network data is publication-grade.</strong> Saddle Ridge (S01) is 100% sound.
+            Three stations (S02, S06, S07) are fully rescued via simple mathematical formulas.
+            Corrupted windows at S03 (frozen temp), S04 (clogged rain), and S05 (waterlogged humidity) are isolated and excluded.
+          </p>
+        </div>
+        <div class="exec-card action-card">
+          <h3><span>&#10148;</span> Decision 2: Technician Dispatch</h3>
+          <p>
+            <strong>Dispatch technician to S03 (Valley Library).</strong><br>
+            S03 has an active, recurrent temperature sensor hardware disconnect (-40&deg;C / +85&deg;C spikes and 80-hour freeze).
+            All other station errors can be solved in software; S03 cannot and requires physical servicing.
+          </p>
+        </div>
+      </div>
+      
+      <div class="section-title">Station-by-Station Quality Assessment & Inclusion Rules</div>
+      <table class="health-table">
+        <thead>
+          <tr>
+            <th style="width: 12%;">Station</th>
+            <th style="width: 14%;">Elevation / Role</th>
+            <th style="width: 14%;">Summary Status</th>
+            <th style="width: 28%;">What Happened</th>
+            <th style="width: 32%;">Action for Spring Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>S01</strong> Saddle Ridge</td>
+            <td>2913 m &bull; Alpine Hut</td>
+            <td><span class="badge badge-pass">Include (100%)</span></td>
+            <td>Extreme cold (-18.7&deg;C) and low pressure (~709 hPa) look unusual but match alpine physics.</td>
+            <td><strong>Include all data without changes.</strong> Confirmed genuine high-elevation weather record.</td>
+          </tr>
+          <tr>
+            <td><strong>S02</strong> North Mesa</td>
+            <td>1623 m &bull; School</td>
+            <td><span class="badge badge-adjust">Correct Press.</span></td>
+            <td>Volunteer swapped uncalibrated pressure board on Mar 21 at 11am local (+6.66 hPa jump).</td>
+            <td><strong>Subtract 6.66 hPa</strong> from pressure readings after Mar 21 17:20 UTC. All other channels 100% good.</td>
+          </tr>
+          <tr>
+            <td><strong>S03</strong> Valley Library</td>
+            <td>1523 m &bull; Valley Ref.</td>
+            <td><span class="badge badge-exclude">Trim Temp</span></td>
+            <td>Digital probe glitched (-40&deg;C, +85&deg;C) and froze solid at 6.5&deg;C for 80 hrs (Mar 18&ndash;21).</td>
+            <td><strong>Exclude Mar 18 06:00 &ndash; Mar 21 14:00 temp</strong> and 4 single-interval spikes. Pressure/wind/rain 100% good.</td>
+          </tr>
+          <tr>
+            <td><strong>S04</strong> Community Gdn</td>
+            <td>1763 m &bull; Foothills</td>
+            <td><span class="badge badge-exclude">Exclude Rain</span></td>
+            <td>Funnel clogged with leaves/nest until cleaned Apr 2 (dumped 33.4 mm surge in 30 mins). Fence repainted.</td>
+            <td><strong>Exclude rainfall before Apr 2 16:30</strong> (under-counted + cleaning artifact). Note subtle daytime fence heating.</td>
+          </tr>
+          <tr>
+            <td><strong>S05</strong> Eastside Rec</td>
+            <td>1644 m &bull; Plains Edge</td>
+            <td><span class="badge badge-adjust">Trim RH + Meta</span></td>
+            <td>Install sheet had latitude typo (39.57 vs 39.754). Humidity saturated &gt;100% after Mar 7 storm.</td>
+            <td><strong>Exclude RH from Mar 7 12:00 to Mar 11 00:00.</strong> Update latitude to 39.7540&deg; N. Rest of data clean.</td>
+          </tr>
+          <tr>
+            <td><strong>S06</strong> Fire Station</td>
+            <td>1891 m &bull; South Hills</td>
+            <td><span class="badge badge-adjust">Shift Timestamps</span></td>
+            <td>Rebooted to local Mountain Time (UTC-6) after battery swap on Mar 24; logger ran 6 hrs behind.</td>
+            <td><strong>Add 6 hours to all timestamps</strong> from Mar 24 10:10 onwards. Recovers 100% of data perfectly.</td>
+          </tr>
+          <tr>
+            <td><strong>S07</strong> Riverbend Farm</td>
+            <td>1525 m &bull; North Valley</td>
+            <td><span class="badge badge-adjust">Scale Wind &times;3.6</span></td>
+            <td>Replacement anemometer fitted Mar 26 outputs pulses in m/s rather than km/h (dropped 3.6&times;).</td>
+            <td><strong>Multiply wind speed by 3.6</strong> from Mar 26 15:30 onwards. Completely restores true wind speed.</td>
+          </tr>
+          <tr>
+            <td><strong>S08</strong> Plains Grange</td>
+            <td>1437 m &bull; East Plains</td>
+            <td><span class="badge badge-adjust">Drop Duplicate</span></td>
+            <td>35.8-hr modem blackout on Mar 16&ndash;18 (SIM expired). Apr 05 data re-appended twice at end of file.</td>
+            <td><strong>Drop trailing duplicate block</strong> (Apr 5 rows). Mark Mar 16&ndash;18 as telemetry gap. Remainder is 100% sound.</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="callout-box" style="margin-top: 6px;">
+        <h4 style="color: #0f172a; margin-bottom: 2px;">Summary Table of Exclusions vs Software Corrections for the Climate Report</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 8pt; color: #475569;">
+          <div>
+            <strong style="color: #b91c1c;">Permanently Exclude from Climate Means:</strong>
+            <ul style="margin: 2px 0 0 14px; padding: 0;">
+              <li>S03 Temperature: 80-hour frozen flatline (Mar 18 06:00 &ndash; Mar 21 14:00) &amp; 4 glitch spikes</li>
+              <li>S04 Precipitation: Entire rain record prior to Apr 02 16:30 (clogged funnel + cleaning burst)</li>
+              <li>S05 Humidity: Saturated period (Mar 07 12:00 &ndash; Mar 11 00:00, values 100&ndash;105%)</li>
+              <li>S08 Telemetry: Missing SIM blackout gap (Mar 16 13:50 &ndash; Mar 18 01:40) &amp; trailing duplicate day</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color: #15803d;">Recovered in Full via Script Formulas:</strong>
+            <ul style="margin: 2px 0 0 14px; padding: 0;">
+              <li>S06 Clocks: Timestamps shifted +6 hours &rarr; 100% complete time-series restored</li>
+              <li>S07 Wind: Multiplied by 3.6 (m/s &rarr; km/h conversion) &rarr; perfect match with network</li>
+              <li>S02 Pressure: Subtracted 6.66 hPa &rarr; barometric elevation curve seamlessly aligned</li>
+              <li>S05 Coordinates: Corrected install sheet latitude typo to 39.7540&deg; N</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="page-footer">
+      <span>Ridgeline Schools Weather Network &bull; Spring Climate Briefing</span>
+      <span>Page 1 of 2</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE 2 ==================== -->
+  <div class="page">
+    <div>
+      <div class="header">
+        <div class="title-area">
+          <h1>Volunteer Technician Work Order & Dispatch Plan</h1>
+          <div class="subtitle">Where to send our one technician next week &bull; 1-Hour Step-by-Step Task List</div>
+        </div>
+        <div class="meta-box">
+          <strong>Mission Plan: Station S03</strong><br>
+          Location: Valley Library<br>
+          Estimated Time: 45&ndash;60 Minutes
+        </div>
+      </div>
+      
+      <!-- Dispatch Box -->
+      <div class="dispatch-container">
+        <div class="dispatch-header">
+          <div>
+            <h2>Primary Dispatch Target: Station S03 (Valley Library)</h2>
+            <div style="font-size: 8.5pt; color: #475569;">Target Subsystem: Digital Air Temperature Probe &amp; Sensor Bus</div>
+          </div>
+          <span class="priority-badge">URGENT FIELD DISPATCH</span>
+        </div>
+        
+        <div class="dispatch-grid">
+          <div>
+            <h4 style="color: #1e3a8a; margin: 0 0 4px 0;">Why S03 and NOT the Second-Best Choice?</h4>
+            <p style="margin: 0 0 6px 0; color: #334155;">
+              Every other station's anomaly is <strong>mathematically deterministic and already resolved</strong>:
+              S06 was a fixed clock shift (+6h), S07 was a known unit scale (3.6&times;), S02 was a static board offset (-6.66 hPa),
+              and S04/S08 issues are already past.
+            </p>
+            <p style="margin: 0; color: #334155;">
+              <strong>S03 is the only station with an ACTIVE, RECURRING HARDWARE FAILURE.</strong>
+              Its digital temperature probe suffered -40&deg;C open-circuit disconnections and +85&deg;C reset defaults on Mar 05, Mar 12, Apr 02, and Apr 08,
+              plus an 80-hour total freeze. Software cannot invent missing weather data. If not physically repaired, S03 will continue losing spring data.
+            </p>
+            
+            <div style="margin-top: 8px; background: #e0f2fe; border: 1px solid #7dd3fc; padding: 6px 8px; border-radius: 4px;">
+              <strong style="color: #0369a1;">What to Check FIRST (Minute 0&ndash;10):</strong><br>
+              Inspect the screw terminals inside the logger enclosure and radiation shield strain relief.
+              A loose screw or corroded ground on a 1-wire digital bus produces intermittent disconnects (-40&deg;C) and reset register states (+85&deg;C).
+            </div>
+          </div>
+          
+          <div>
+            <h4 style="color: #1e3a8a; margin: 0 0 4px 0;">1-Hour Field Protocol for the Volunteer</h4>
+            <ol class="step-list">
+              <li><strong>Minute 00&ndash;10: Terminal Inspection:</strong> Open enclosure, inspect probe wiring to terminal block. Check for loose copper strands, moisture ingress, or oxidized contacts. Gently tug each wire.</li>
+              <li><strong>Minute 10&ndash;25: Sensor Replacement:</strong> Swap the Dallas DS18B20 temperature probe with the pre-tested spare from the spares kit. Tighten screw terminals firmly.</li>
+              <li><strong>Minute 25&ndash;35: Radiation Shield Check:</strong> Check the louvers of the radiation shield for spider webs, wasps' nests, or debris that might trap heat or moisture against the probe. Clean with brush.</li>
+              <li><strong>Minute 35&ndash;50: Real-Time Diagnostic:</strong> Power on logger display. Confirm live temperature updates every 10 seconds and tracks ambient temperature (compare against portable handheld thermometer).</li>
+              <li><strong>Minute 50&ndash;60: Close &amp; Sign-off:</strong> Reseal weatherproof grommet with silicone grease, verify logger status LED blinks green, log replacement in physical notebook.</li>
+            </ol>
+            
+            <div style="margin-top: 6px; font-size: 8pt; color: #64748b;">
+              <strong>Equipment to bring:</strong> Small flathead terminal screwdriver, spare DS18B20 digital probe, handheld reference thermometer, lint-free cloth, desiccant pouch.
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section-title">Secondary Backlog & Remote Resolutions (No Field Visit Required)</div>
+      <table class="health-table" style="margin-bottom: 10px;">
+        <thead>
+          <tr>
+            <th style="width: 14%;">Station</th>
+            <th style="width: 22%;">Reported Issue</th>
+            <th style="width: 28%;">Why Remote Fix is Better than a Visit</th>
+            <th style="width: 36%;">Action Taken</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>S06</strong> Fire Station</td>
+            <td>Clock 6 hours behind UTC</td>
+            <td>The data is completely sound; visiting on-site would only take 5 mins to press buttons, but our script resolves all historical data cleanly.</td>
+            <td>Next routine battery change will re-sync clock; data corrected via automated +6 hr pipeline rule.</td>
+          </tr>
+          <tr>
+            <td><strong>S07</strong> Riverbend Farm</td>
+            <td>Anemometer reads low</td>
+            <td>New anemometer is mechanically sound and spinning freely; the only issue is the logger interpreting m/s pulses as km/h.</td>
+            <td>Scaled by factor of 3.6 in data ingestion. Next site visit can update logger firmware pulse constant.</td>
+          </tr>
+          <tr>
+            <td><strong>S02</strong> North Mesa</td>
+            <td>Pressure +6.66 hPa high</td>
+            <td>Uncalibrated spare board has a steady, pure linear offset. A site visit without a high-precision lab calibrator cannot fix it on-site.</td>
+            <td>Subtracted static 6.66 hPa offset in software. When calibration kit is available later this summer, calibrate properly.</td>
+          </tr>
+          <tr>
+            <td><strong>S04</strong> Community Gdn</td>
+            <td>Rain blockage &amp; painted post</td>
+            <td>Funnel was already cleared by volunteer on Apr 2. Post repaint is permanent; daytime solar reflection is noted in metadata.</td>
+            <td>Excluded invalid historical rain; current rain gauge is working. Siting note added to annual report.</td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div class="callout-box" style="background: #f8fafc; border-left: 4px solid #16a34a;">
+        <h4 style="color: #166534; margin: 0 0 2px 0;">Guidance for the Coordinator at Monday's Meeting</h4>
+        <p style="margin: 0; font-size: 8.5pt; color: #334155; line-height: 1.35;">
+          You can confidently reassure the school committee that our network data is sound and defensible.
+          By applying these precise mathematical adjustments, we preserve over 95% of the spring weather history without sweeping flawed data under the rug.
+          Sending our volunteer to S03 protects our upcoming summer dataset before severe heatwaves begin.
+        </p>
+      </div>
+    </div>
+    
+    <div class="page-footer">
+      <span>Ridgeline Schools Weather Network &bull; Spring Climate Briefing</span>
+      <span>Page 2 of 2</span>
+    </div>
+  </div>
+
+</body>
+</html>
