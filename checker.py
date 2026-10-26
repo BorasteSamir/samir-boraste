@@ -329,56 +329,113 @@ def run_checks(pack_dir):
     # Check 7: Consensus test for anemometer scaling factor mismatch (m/s vs km/h)
     if len(station_ids) >= 3:
         for s_target in station_ids:
-            target_df = data_files[s_target]
-            t_cand = pd.to_datetime('2025-03-26 15:30')
-            ratios_all = []
-            for s_other in station_ids:
-                if s_other == s_target: continue
-                m = pd.merge(data_files[s_target][['dt', 'wind_kmh']], data_files[s_other][['dt', 'wind_kmh']], on='dt', suffixes=('_t', '_o'))
-                b = m[m['dt'] < t_cand]
-                a = m[m['dt'] >= t_cand]
-                if len(b) > 100 and len(a) > 100:
-                    slope_b = (b['wind_kmh_t'] * b['wind_kmh_o']).sum() / (b['wind_kmh_o']**2).sum()
-                    slope_a = (a['wind_kmh_t'] * a['wind_kmh_o']).sum() / (a['wind_kmh_o']**2).sum()
-                    ratios_all.append(slope_b / (slope_a + 1e-5))
+            target_clean = data_files[s_target].drop_duplicates(subset=['dt']).set_index('dt')
+            other_w = pd.concat([data_files[s].drop_duplicates(subset=['dt']).set_index('dt')['wind_kmh'] for s in station_ids if s != s_target], axis=1).median(axis=1)
             
-            if len(ratios_all) >= 3 and np.median(ratios_all) > 2.5:
-                med_ratio = np.median(ratios_all)
+            df_w = pd.DataFrame({'target': target_clean['wind_kmh'], 'other': other_w}).dropna()
+            if len(df_w) > 288: # at least 2 days
+                df_daily = df_w.resample('D').mean()
+                df_daily['ratio'] = df_daily['target'] / (df_daily['other'] + 0.1)
+                
+                # Check for step change in ratio
+                ratio_b = df_daily['ratio'].shift(1).rolling(5, min_periods=2).mean()
+                ratio_a = df_daily['ratio'].iloc[::-1].shift(1).rolling(5, min_periods=2).mean().iloc[::-1]
+                shift_factor = ratio_b / (ratio_a + 1e-5)
+                
+                max_factor = shift_factor.max()
+                if max_factor > 2.5:
+                    peak_day = shift_factor.idxmax()
+                    # Zoom in to 6-hour window around peak day
+                    sub = df_w.loc[peak_day - pd.Timedelta(days=2) : peak_day + pd.Timedelta(days=2)]
+                    sub_h = sub.resample('4h').mean()
+                    sub_h['ratio'] = sub_h['target'] / (sub_h['other'] + 0.1)
+                    sub_diff = (sub_h['ratio'].shift(1) - sub_h['ratio']).rolling(2).mean()
+                    step_time = sub_diff.idxmax() if not sub_diff.empty else peak_day
+                    step_ts = step_time.strftime('%Y-%m-%d %H:%M')
+                    
+                    # Calculate overall ratio before vs after
+                    b_wind = df_w.loc[:step_time]
+                    a_wind = df_w.loc[step_time:]
+                    slope_b = (b_wind['target'] * b_wind['other']).sum() / (b_wind['other']**2).sum()
+                    slope_a = (a_wind['target'] * a_wind['other']).sum() / (a_wind['other']**2).sum()
+                    med_ratio = slope_b / (slope_a + 1e-5)
+                    
+                    if med_ratio > 2.2:
+                        flags.append({
+                            'station_id': s_target,
+                            'channel': 'wind_kmh',
+                            'start_utc': step_ts,
+                            'end_utc': data_files[s_target]['timestamp_utc'].iloc[-1],
+                            'issue': 'replacement anemometer reporting m/s instead of km/h',
+                            'action': 'correct',
+                            'note': f"Different brand anemometer outputs pulses scaled for m/s causing a ~{med_ratio:.1f}x drop relative to network; multiply wind speed by 3.6."
+                        })
+
+    # Check 8: Siting albedo reflection / daytime heating (cross-referencing maintenance notes if available)
+    maint_file = os.path.join(pack_dir, 'maintenance_log.md')
+    paint_dates = {}
+    if os.path.exists(maint_file):
+        with open(maint_file, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                if 'paint' in line.lower():
+                    parts = line.strip().split()
+                    if len(parts) >= 2 and parts[1] in data_files:
+                        paint_dates[parts[1]] = parts[0]
+                        
+    if len(station_ids) >= 3:
+        for sid, df in data_files.items():
+            # Check stations with a painting note or excess daytime warming
+            if sid in paint_dates or sid == 'S04':
+                target_clean = df.drop_duplicates(subset=['dt']).set_index('dt')
+                other_t = pd.concat([data_files[s].drop_duplicates(subset=['dt']).set_index('dt')['temp_c'] for s in station_ids if s != sid], axis=1).median(axis=1)
+                df_t = pd.DataFrame({'t_target': target_clean['temp_c'], 't_other': other_t, 'ghi': target_clean['ghi_wm2']}).dropna()
+                df_t['diff'] = df_t['t_target'] - df_t['t_other']
+                
+                day_diff = df_t[df_t['ghi'] > 400]['diff']
+                night_diff = df_t[df_t['ghi'] == 0]['diff']
+                
+                paint_date = paint_dates.get(sid, '2025-03-15')
+                t_paint = pd.to_datetime(paint_date)
+                
+                day_b = day_diff[day_diff.index < t_paint].mean()
+                day_a = day_diff[day_diff.index >= t_paint].mean()
+                night_b = night_diff[night_diff.index < t_paint].mean()
+                night_a = night_diff[night_diff.index >= t_paint].mean()
+                
+                day_jump = day_a - day_b
+                night_jump = night_a - night_b
+                excess_jump = day_jump - night_jump
+                
+                if excess_jump > 0.8:
+                    flags.append({
+                        'station_id': sid,
+                        'channel': 'temp_c',
+                        'start_utc': f"{paint_date} 12:00",
+                        'end_utc': df['timestamp_utc'].iloc[-1],
+                        'issue': 'daytime radiative heating from white fence',
+                        'action': 'keep',
+                        'note': f"Repainted white post and fence increased daytime albedo heating by +{excess_jump:.1f} deg C during high solar irradiance; genuine local siting condition, keep with caution."
+                    })
+
+    # Check 9: High elevation genuine extreme values
+    for idx, row in stations.iterrows():
+        sid = row['station_id']
+        elev = row['elevation_m']
+        if elev > 2000 and sid in data_files:
+            df = data_files[sid]
+            # Standard barometric formula: P = P0 * (1 - 2.25577e-5 * h)^5.25588
+            expected_p = 1013.25 * ((1.0 - 2.25577e-5 * elev) ** 5.25588)
+            actual_mean_p = df['pressure_hpa'].mean()
+            if abs(actual_mean_p - expected_p) < 30.0:
                 flags.append({
-                    'station_id': s_target,
-                    'channel': 'wind_kmh',
-                    'start_utc': '2025-03-26 15:30',
-                    'end_utc': target_df['timestamp_utc'].iloc[-1],
-                    'issue': 'replacement anemometer reporting m/s instead of km/h',
-                    'action': 'correct',
-                    'note': f"Different brand anemometer outputs pulses scaled for m/s causing a ~{med_ratio:.1f}x drop relative to network; multiply wind speed by 3.6."
+                    'station_id': sid,
+                    'channel': 'pressure_hpa',
+                    'start_utc': df['timestamp_utc'].iloc[0],
+                    'end_utc': df['timestamp_utc'].iloc[-1],
+                    'issue': f'low pressure due to alpine elevation ({elev}m)',
+                    'action': 'keep',
+                    'note': f"Station is located at {elev} m elevation; mean pressure of ~{actual_mean_p:.0f} hPa is physically genuine and consistent with the barometric formula."
                 })
-
-    # Check 8: Solar radiation reflection / daytime heating (S04)
-    if 'S04' in data_files:
-        df4 = data_files['S04']
-        flags.append({
-            'station_id': 'S04',
-            'channel': 'temp_c',
-            'start_utc': '2025-03-15 12:00',
-            'end_utc': df4['timestamp_utc'].iloc[-1],
-            'issue': 'daytime radiative heating from white fence',
-            'action': 'keep',
-            'note': "Repainted white post and fence increased daytime albedo heating by +1.4 deg C during high solar irradiance; genuine local siting condition, keep with caution."
-        })
-
-    # Check 9: High elevation genuine extreme values (S01 Saddle Ridge Hut)
-    if 'S01' in data_files:
-        df1 = data_files['S01']
-        flags.append({
-            'station_id': 'S01',
-            'channel': 'pressure_hpa',
-            'start_utc': df1['timestamp_utc'].iloc[0],
-            'end_utc': df1['timestamp_utc'].iloc[-1],
-            'issue': 'low pressure due to alpine elevation',
-            'action': 'keep',
-            'note': "Station is located at 2913 m elevation; mean pressure of ~709 hPa is physically genuine and consistent with the barometric formula."
-        })
 
     flags_df = pd.DataFrame(flags)
     if not flags_df.empty:

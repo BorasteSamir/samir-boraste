@@ -1,5 +1,5 @@
 station_id,channel,start_utc,end_utc,issue,action,note
-S01,pressure_hpa,2025-03-01 00:00,2025-04-11 23:50,low pressure due to alpine elevation,keep,Station is located at 2913 m elevation; mean pressure of ~709 hPa is physically genuine and consistent with the barometric formula.
+S01,pressure_hpa,2025-03-01 00:00,2025-04-11 23:50,low pressure due to alpine elevation (2913m),keep,Station is located at 2913 m elevation; mean pressure of ~709 hPa is physically genuine and consistent with the barometric formula.
 S02,pressure_hpa,2025-03-21 17:20,2025-04-11 23:50,uncalibrated replacement pressure board,correct,Uncalibrated pressure board swapped in introduces a +6.66 hPa step offset relative to network; subtract 6.66 hPa.
 S03,temp_c,2025-03-05 14:20,2025-03-05 14:20,open circuit temperature glitch,exclude,Single reading of -40.0 deg C indicates an intermittent 1-wire open circuit / sensor disconnect; exclude interval.
 S03,temp_c,2025-03-12 03:40,2025-03-12 03:40,DS18B20 power-on reset glitch,exclude,Single reading of +85.0 deg C is the DS18B20 digital temperature sensor power-on reset register default; exclude interval.
@@ -7,11 +7,11 @@ S03,temp_c,2025-03-18 06:00,2025-03-21 14:00,temperature sensor frozen flatline,
 S03,temp_c,2025-04-02 22:10,2025-04-02 22:10,open circuit temperature glitch,exclude,Single reading of -40.0 deg C indicates an intermittent 1-wire open circuit / sensor disconnect; exclude interval.
 S03,temp_c,2025-04-08 09:50,2025-04-08 09:50,DS18B20 power-on reset glitch,exclude,Single reading of +85.0 deg C is the DS18B20 digital temperature sensor power-on reset register default; exclude interval.
 S04,rain_mm,2025-03-01 00:00,2025-04-02 16:00,clogged rain gauge funnel,exclude,Leaves and bird nest in funnel severely suppressed rainfall collection (accumulated only 21.2 mm vs 50-70 mm across network); exclude under-counted period.
-S04,temp_c,2025-03-15 12:00,2025-04-11 23:50,daytime radiative heating from white fence,keep,"Repainted white post and fence increased daytime albedo heating by +1.4 deg C during high solar irradiance; genuine local siting condition, keep with caution."
+S04,temp_c,2025-03-15 12:00,2025-04-11 23:50,daytime radiative heating from white fence,keep,"Repainted white post and fence increased daytime albedo heating by +2.0 deg C during high solar irradiance; genuine local siting condition, keep with caution."
 S04,rain_mm,2025-04-02 16:10,2025-04-02 16:30,artificial funnel cleaning rain surge,exclude,33.4 mm recorded in 30 minutes caused by trapped water rushing through during funnel cleaning; exclude cleaning artifact.
 S05,metadata,2025-03-01 00:00,2025-04-11 23:50,station latitude coordinate typo,correct,GPS receiver consistently logs latitude 39.7540 N vs 39.5700 N in install sheet; update metadata latitude to 39.7540.
 S05,rh_pct,2025-03-07 12:00,2025-03-11 00:00,waterlogged humidity sensor saturation,exclude,Relative humidity exceeds physical limit reaching 105.0% for 84.2 hours following rain/snow event; exclude waterlogged period.
 S06,all,2025-03-24 10:10,2025-04-11 17:50,logger clock set to local MDT after battery swap,correct,Logger clock offset by -6.0h relative to GPS UTC (running on MDT); add 6 hours to timestamps.
-S07,wind_kmh,2025-03-26 15:30,2025-04-11 23:50,replacement anemometer reporting m/s instead of km/h,correct,Different brand anemometer outputs pulses scaled for m/s causing a ~3.6x drop relative to network; multiply wind speed by 3.6.
+S07,wind_kmh,2025-03-26 16:00,2025-04-11 23:50,replacement anemometer reporting m/s instead of km/h,correct,Different brand anemometer outputs pulses scaled for m/s causing a ~3.5x drop relative to network; multiply wind speed by 3.6.
 S08,all,2025-03-16 14:00,2025-03-18 01:30,telemetry data gap from expired SIM card,exclude,Missing 35.8 hours of telemetry data due to cellular SIM plan expiration; mark period as missing data.
 S08,all,2025-04-05 00:00,2025-04-05 23:50,duplicate day appended to file,exclude,File contains 144 identical duplicate records re-appended out of chronological order at end of file; exclude trailing duplicate block.
